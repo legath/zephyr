@@ -21,6 +21,8 @@ manifest:
   remotes:
     - name: upstream
       url-base: https://github.com/zephyrproject-rtos
+    - name: legath
+      url-base: https://github.com/legath
 
   #
   # Please add items below based on alphabetical order
@@ -78,8 +80,9 @@ manifest:
       revision: cc8731dba4fd9c57d7fe8ea6149828b89c2bd635
       path: modules/hal/stm32
     - name: hal_ti
-      revision: 277d70a65ab14d46bf1ec0935cf9bb28bbaa8ab9
+      revision: d87d8ad322dff59e23135c52e204d2689c4be487
       path: modules/hal/ti
+      remote: legath
     - name: libmetal
       revision: 9d4ee2c3cfd5f49861939447990f3b7d7bf9bf94
       path: modules/hal/libmetal
