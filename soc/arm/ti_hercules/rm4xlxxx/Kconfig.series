@@ -1,0 +1,12 @@
+# Copyright (c) 2021 Alexander Bulychev <a.f.bulychev@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_RM4X
+	bool "TI Hercules RM4X"
+	select ARM
+	select CPU_CORTEX_R4
+	select CPU_HAS_FPU
+	select GIC_V1
+	select SOC_FAMILY_HERCULES
+	help
+	  Enable support for TI Hercules RM4X series

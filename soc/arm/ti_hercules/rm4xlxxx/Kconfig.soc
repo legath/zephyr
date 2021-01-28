@@ -1,0 +1,11 @@
+# Copyright (c) 2021 Alexander Bulychev <a.f.bulychev@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
+choice
+	prompt "Hercules RM4xLxxx selection"
+	depends on SOC_SERIES_RM4X
+
+	config SOC_RM46LXXX
+		bool "RM46LXXX"
+
+endchoice

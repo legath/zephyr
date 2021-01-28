@@ -1,0 +1,15 @@
+# Copyright (c) 2021 Alexander Bulychev <a.f.bulychev@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_FAMILY_HERCULES
+	bool
+
+if SOC_FAMILY_HERCULES
+
+config SOC_FAMILY
+	string
+	default "ti_hercules"
+
+source "soc/arm/ti_hercules/*/Kconfig.soc"
+
+endif # SOC_FAMILY_HERCULES

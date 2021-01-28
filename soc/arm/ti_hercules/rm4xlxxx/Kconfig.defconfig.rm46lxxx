@@ -1,0 +1,11 @@
+# TI RM46L852 platform configuration options
+
+# Copyright (c) 2021 Alexander Bulychev <a.f.bulychev@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_RM46LXXX
+
+config SOC
+	default "RM46LXXX"
+
+endif # SOC_RM46LXXX

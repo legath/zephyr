@@ -1,0 +1,14 @@
+# RM4X series configuration options
+
+# Copyright (c) 2021 Alexander Bulychev <a.f.bulychev@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_SERIES_RM4X
+
+config SOC_SERIES
+	default "rm4xlxxx"
+
+
+source "soc/arm/ti_hercules/rm4xlxxx/Kconfig.defconfig.rm4*"
+
+endif # SOC_SERIES_RM4X
