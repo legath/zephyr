@@ -72,6 +72,16 @@ API Changes
 * The :c:func:`coap_packet_init` function will now take a pointer to a constant
   buffer as the ``token`` argument instead of a pointer to a writable buffer.
 
+* A new :ref:`regulator_api` API has been added to support controlling power
+  sources.  Regulators can also be associated with devicetree nodes, allowing
+  drivers to ensure the device they access has been powered up.  For simple
+  GPIO-only regulators a devicetree property ``supply-gpios`` is defined as a
+  standard way to identify the control signal in nodes that support power
+  control.
+
+* :c:type:`fs_tile_t` objects must now be initialized by calling
+  :c:func:`fs_file_t_init` before their first use.
+
 Deprecated in this release
 ==========================
 
@@ -83,8 +93,48 @@ Deprecated in this release
 * DEVICE_AND_API_INIT was deprecated in favor of DEVICE_DT_INST_DEFINE and
   DEVICE_DEFINE.
 
+* Bluetooth
+
+  * Deprecated the :c:func:`bt_set_id_addr` function, use :c:func:`bt_id_create`
+    before calling :c:func:`bt_enable` instead. When ``CONFIG_PRIVACY`` is
+    enabled a valid IRK has to be supplied by the application for this case.
+
 Removed APIs in this release
 ============================
+
+* Bluetooth
+
+  * The deprecated BT_LE_SCAN_FILTER_DUPLICATE define has been removed,
+    use BT_LE_SCAN_OPT_FILTER_DUPLICATE instead.
+  * The deprecated BT_LE_SCAN_FILTER_WHITELIST define has been removed,
+    use BT_LE_SCAN_OPT_FILTER_WHITELIST instead.
+  * The deprecated bt_le_scan_param::filter_dup argument has been removed,
+    use bt_le_scan_param::options instead.
+  * The deprecated bt_conn_create_le() function has been removed,
+    use bt_conn_le_create() instead.
+  * The deprecated bt_conn_create_auto_le() function has been removed,
+    use bt_conn_le_create_auto() instead.
+  * The deprecated bt_conn_create_slave_le() function has been removed,
+    use bt_le_adv_start() instead with bt_le_adv_param::peer set to the remote
+    peers address.
+  * The deprecated BT_LE_ADV_* macros have been removed,
+    use the BT_GAP_ADV_* enums instead.
+  * The deprecated bt_conn_security function has been removed,
+    use bt_conn_set_security instead.
+  * The deprecated BT_SECURITY_* defines NONE, LOW, MEDIUM, HIGH, FIPS have been
+    removed, use the L0, L1, L2, L3, L4 defines instead.
+  * The deprecated BT_HCI_ERR_AUTHENTICATION_FAIL define has been removed,
+    use BT_HCI_ERR_AUTH_FAIL instead.
+
+* Kernel
+
+  * The deprecated k_mem_pool API has been removed entirely (for the
+    past release it was backed by a k_heap, but maintained a
+    compatible API).  Now all instantiated heaps must be
+    sys_heap/k_heaps.  Note that the new-style heap is a general
+    purpose allocator and does not make the same promises about block
+    alignment/splitting.  Applications with such requirements should
+    look at porting their logic, or perhaps at the k_mem_slab utility.
 
 Stable API changes in this release
 ==================================
@@ -104,6 +154,8 @@ Architectures
     * Introduced the functionality for chain-loadable Zephyr
       fimrmware images to force the initialization of internal
       architecture state during early system boot (Cortex-M).
+    * Changed the default Floating Point Services mode to
+      Shared FP registers mode.
 
   * AARCH64
 
@@ -140,6 +192,37 @@ Boards & SoC Support
   * Generic LEON3 board configuration for GRLIB FPGA reference designs
   * SPARC QEMU for emulating LEON3 processors and running kernel tests
 
+* Added support for these STM32 boards and SoCs :
+
+  * Cortex-M Trace Reference Board V1.2 (SEGGER TRB STM32F407)
+  * MikroE Clicker 2 for STM32
+  * STM32F103RCT6 Mini
+  * ST Nucleo F303K8
+  * ST Nucleo F410RB
+  * ST Nucleo H723ZG
+  * ST Nucleo L011K4
+  * ST Nucleo L031K6
+  * ST Nucleo L433RC-P
+  * ST STM32L562E-DK Discovery
+  * STM32F105xx and STM32F103xG SoC variants
+  * STM32G070xx SoC variants
+  * STM32G474xB/C SoC variants
+  * STM32L071xx SoC variants
+  * STM32L151xC and STM32L152xC SoC variants
+
+* Made these global changes in STM32 boards and SoC series:
+
+  * Pin control configuration is now done through device tree and existing
+    macros to configure pins in pinmux.c files are tagged as deprecated.
+    The new pin settings are provided thanks to .dtsi files distributed in
+    hal_stm32 module.
+  * Generic LL headers, also distributed in hal_stm32 module, are now available
+    to abstract series references in drivers.
+  * Hardware stack protection is now default on all boards with enabled MPU
+    (SRAM > 64K ), excluding F0/G0/L0 series.
+  * West flash STM32CubeProgrammer runner was added as a new option for STM32
+    boards flashing (to be installed separately).
+
 * Made these changes in other boards:
 
   * CY8CKIT_062_WIFI_BT_M0: was renamed to CY8CKIT_062_WIFI_BT.
@@ -153,6 +236,7 @@ Boards & SoC Support
 * Added support for these following shields:
 
   * Inventek es-WIFI shield
+  * Sharp memory display generic shield
 
 Drivers and Sensors
 *******************
@@ -164,6 +248,26 @@ Drivers and Sensors
 * Bluetooth
 
 * CAN
+
+  * We reworked the configuration API.
+    A user can now specify the timing manually (define prop segment,
+    phase segment1, phase segment2, and prescaler) or use a newly introduced
+    algorithm to calculate optimal timing values from a bitrate and sample point.
+    The bitrate and sample point can be specified in the device tree too.
+    It is possible to change the timing values at runtime now.
+
+  * We reworked the zcan_frame struct due to undefined behavior.
+    The std_id (11-bit) and ext_id (29-bit) are merged to a single id
+    field (29-bit). The union of both IDs was removed.
+
+  * We made the CANbus API CAN-FD compatible.
+    The zcan_frame data-field can have a size of >8 bytes now.
+    A flag was introduced to mark a zcan_frame as CAN-FD frame.
+    A flag was introduced that enables a bitrate switch in CAN-FD frames.
+    The configuration API supports an additional timing parameter for the CAN-FD
+    data-phase.
+
+  * drivers are converted to use the new DEVICE_DT_* macros.
 
 * Clock Control
 
@@ -181,7 +285,12 @@ Drivers and Sensors
 
 * DMA
 
+  * kmalloc was removed from STM32 DMAMUX driver initialization.
+
 * EEPROM
+
+  * Marked the EEPROM API as stable.
+  * Added support for AT24Cxx devices.
 
 * Entropy
 
@@ -193,6 +302,9 @@ Drivers and Sensors
 
   * CONFIG_NORDIC_QSPI_NOR_QE_BIT has been removed.  The
     quad-enable-requirements devicetree property should be used instead.
+  * MPU_ALLOW_FLASH_WRITE is now default on STM32 boards when MPU is enabled.
+  * Add driver for STM32H7 and STM32L1 SoC series.
+  * Add QSPI NOR Flash controller support for STM32 family.
 
 * GPIO
 
@@ -225,11 +337,18 @@ Drivers and Sensors
 
 * LoRa
 
+* memc
+
+  * Added FMC/SDRAM memory controller for STM32 family
+
 * Modem
 
 * PECI
 
 * Pinmux
+
+  * STM32 pinmux driver has been reworked to allow pin configuration using
+    device tree definitions. The previous C macros are now deprecated.
 
 * PS/2
 
@@ -238,6 +357,8 @@ Drivers and Sensors
 * Sensor
 
 * Serial
+
+  * Added ASYNC API support on STM32 family.
 
 * SPI
 
@@ -294,6 +415,9 @@ Build and Infrastructure
     should be using the new devicetree API introduced in Zephyr 2.3 and
     documented in :ref:`dt-from-c`. Information on flash partitions has moved
     to :ref:`flash_map_api`.
+  * It is now possible to resolve at build time the device pointer associated
+    with a device that is defined in devicetree, via ``DEVICE_DT_GET``.  See
+    :ref:`dt-get-device`.
 
 * West
 
@@ -305,7 +429,19 @@ Build and Infrastructure
 Libraries / Subsystems
 **********************
 
+* File systems
+
+  * API
+
+    * Added c:func:`fs_file_t_init` function for initialization of
+      c:type:`fs_file_t` objects.
+
 * Disk
+
+* File Systems
+
+  * :option:`CONFIG_FS_LITTLEFS_FC_MEM_POOL` has been deprecated and
+    should be replaced by :option:`CONFIG_FS_LITTLEFS_FC_HEAP_SIZE`.
 
 * Management
 
@@ -420,6 +556,8 @@ Documentation
 
 Tests and Samples
 *****************
+
+  * A sample was added to demonstrate how to use the ADC driver API.
 
 Issue Related Items
 *******************

@@ -564,8 +564,9 @@ class BinaryHandler(Handler):
 
         # FIXME: This is needed when killing the simulator, the console is
         # garbled and needs to be reset. Did not find a better way to do that.
+        if sys.stdout.isatty():
+            subprocess.call(["stty", "sane"])
 
-        subprocess.call(["stty", "sane"])
         self.instance.results = harness.tests
 
         if not self.terminated and self.returncode != 0:
@@ -1063,7 +1064,8 @@ class QEMUHandler(Handler):
         self.thread.daemon = True
         logger.debug("Spawning QEMUHandler Thread for %s" % self.name)
         self.thread.start()
-        subprocess.call(["stty", "sane"])
+        if sys.stdout.isatty():
+            subprocess.call(["stty", "sane"])
 
         logger.debug("Running %s (%s)" % (self.name, self.type_str))
         command = [self.generator_cmd]
@@ -3408,8 +3410,8 @@ class TestSuite(DisablePyTestCollectionMixin):
                                     'error',
                                     type="failure",
                                     message="failed")
-                            p = os.path.join(self.outdir, instance.platform.name, instance.testcase.name)
-                            log_file = os.path.join(p, "handler.log")
+                            log_root = os.path.join(self.outdir, instance.platform.name, instance.testcase.name)
+                            log_file = os.path.join(log_root, "handler.log")
                             el.text = self.process_log(log_file)
 
                         elif instance.results[k] == 'PASS' \
@@ -3445,9 +3447,9 @@ class TestSuite(DisablePyTestCollectionMixin):
                             type="failure",
                             message=instance.reason)
 
-                        p = ("%s/%s/%s" % (self.outdir, instance.platform.name, instance.testcase.name))
-                        bl = os.path.join(p, "build.log")
-                        hl = os.path.join(p, "handler.log")
+                        log_root = ("%s/%s/%s" % (self.outdir, instance.platform.name, instance.testcase.name))
+                        bl = os.path.join(log_root, "build.log")
+                        hl = os.path.join(log_root, "handler.log")
                         log_file = bl
                         if instance.reason != 'Build error':
                             if os.path.exists(hl):

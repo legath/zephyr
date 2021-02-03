@@ -1502,6 +1502,11 @@ static void le_set_scan_enable(struct net_buf *buf, struct net_buf **evt)
 	status = ll_scan_enable(cmd->enable);
 #endif /* !CONFIG_BT_CTLR_ADV_EXT */
 
+	if (!IS_ENABLED(CONFIG_BT_CTLR_SCAN_ENABLE_STRICT) &&
+	    (status == BT_HCI_ERR_CMD_DISALLOWED)) {
+		status = BT_HCI_ERR_SUCCESS;
+	}
+
 	*evt = cmd_complete_status(status);
 }
 
@@ -2972,6 +2977,11 @@ static void le_set_ext_scan_enable(struct net_buf *buf, struct net_buf **evt)
 #endif
 
 	status = ll_scan_enable(cmd->enable, cmd->duration, cmd->period);
+
+	if (!IS_ENABLED(CONFIG_BT_CTLR_SCAN_ENABLE_STRICT) &&
+	    (status == BT_HCI_ERR_CMD_DISALLOWED)) {
+		status = BT_HCI_ERR_SUCCESS;
+	}
 
 	*evt = cmd_complete_status(status);
 }
@@ -5721,13 +5731,17 @@ static void encode_control(struct node_rx_pdu *node_rx,
 
 #if defined(CONFIG_BT_CTLR_PROFILE_ISR)
 	case NODE_RX_TYPE_PROFILE:
-		BT_INFO("l: %d, %d, %d; t: %d, %d, %d.",
+		BT_INFO("l: %u, %u, %u; t: %u, %u, %u; cpu: %u, %u, %u, %u.",
 			pdu_data->profile.lcur,
 			pdu_data->profile.lmin,
 			pdu_data->profile.lmax,
 			pdu_data->profile.cur,
 			pdu_data->profile.min,
-			pdu_data->profile.max);
+			pdu_data->profile.max,
+			pdu_data->profile.radio,
+			pdu_data->profile.lll,
+			pdu_data->profile.ull_high,
+			pdu_data->profile.ull_low);
 		return;
 #endif /* CONFIG_BT_CTLR_PROFILE_ISR */
 
