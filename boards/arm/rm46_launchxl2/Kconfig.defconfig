@@ -1,0 +1,7 @@
+# TI LaunchXL2-RM46 development board configuration
+
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD
+	default "rm46_launchxl2"
+	depends on BOARD_RM46_LAUNCHXL2

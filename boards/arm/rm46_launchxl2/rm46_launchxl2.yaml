@@ -1,0 +1,9 @@
+identifier: rm46_launchxl2
+name: LAUNCHXL2-RM46
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+ram: 192
+flash: 1280
