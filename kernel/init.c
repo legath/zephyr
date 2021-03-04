@@ -241,7 +241,6 @@ static void init_idle_thread(int i)
 static char *prepare_multithreading(void)
 {
 	char *stack_ptr;
-	uint32_t opt;
 
 	/* _kernel.ready_q is all zeroes */
 	z_sched_init();
@@ -258,18 +257,11 @@ static char *prepare_multithreading(void)
 	 */
 	_kernel.ready_q.cache = &z_main_thread;
 #endif
-
-	opt = K_ESSENTIAL;
-#if defined(CONFIG_FPU) && defined(CONFIG_FPU_SHARING)
-	/* Enable FPU in main thread */
-	opt |= K_FP_REGS;
-#endif
-
 	stack_ptr = z_setup_new_thread(&z_main_thread, z_main_stack,
 				       CONFIG_MAIN_STACK_SIZE, bg_thread_main,
 				       NULL, NULL, NULL,
 				       CONFIG_MAIN_THREAD_PRIORITY,
-				       opt, "main");
+				       K_ESSENTIAL, "main");
 	z_mark_thread_as_started(&z_main_thread);
 	z_ready_thread(&z_main_thread);
 
@@ -394,6 +386,9 @@ FUNC_NORETURN void z_cstart(void)
 #if defined(CONFIG_MMU) && defined(CONFIG_USERSPACE)
 	z_kernel_map_fixup();
 #endif
+	/* do any necessary initialization of static devices */
+	z_device_state_init();
+
 	/* perform basic hardware initialization */
 	z_sys_init_run_level(_SYS_INIT_LEVEL_PRE_KERNEL_1);
 	z_sys_init_run_level(_SYS_INIT_LEVEL_PRE_KERNEL_2);

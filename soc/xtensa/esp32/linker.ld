@@ -39,6 +39,10 @@ PROVIDE ( crc32_le = 0x4005cfec );
 PROVIDE ( Cache_Read_Disable_rom = 0x40009ab8 );
 PROVIDE ( Cache_Read_Enable_rom = 0x40009a84 );
 PROVIDE ( Cache_Read_Init_rom = 0x40009950 );
+PROVIDE ( phy_get_romfuncs = 0x40004100 );
+PROVIDE ( SPI1 = 0x3ff42fff );
+PROVIDE ( SPI2 = 0x3ff64fff );
+PROVIDE ( SPI3 = 0x3ff65fff );
 
 PROVIDE ( esp32_rom_uart_tx_one_char = 0x40009200 );
 PROVIDE ( esp32_rom_uart_rx_one_char = 0x400092d0 );
@@ -56,6 +60,8 @@ PROVIDE ( esp32_rom_ets_printf = ets_printf );
 PROVIDE ( esp32_rom_g_ticks_per_us_app = g_ticks_per_us_app );
 PROVIDE ( esp32_rom_g_ticks_per_us_pro = g_ticks_per_us_app );
 PROVIDE ( esp32_rom_ets_delay_us = ets_delay_us );
+PROVIDE ( TIMERG0 = 0x3ff5F000 );
+PROVIDE ( TIMERG1 = 0x3ff60000 );
 
 /* __udivdi3 is exported using assignment, which declares strong symbols */
 __udivdi3 = 0x4000cff8;

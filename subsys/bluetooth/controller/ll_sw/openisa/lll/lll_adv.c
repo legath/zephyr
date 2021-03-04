@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Nordic Semiconductor ASA
+ * Copyright (c) 2018-2021 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -28,7 +28,9 @@
 
 #include "lll.h"
 #include "lll_vendor.h"
+#include "lll_adv_types.h"
 #include "lll_adv.h"
+#include "lll_adv_pdu.h"
 #include "lll_conn.h"
 #include "lll_chan.h"
 #include "lll_filter.h"
@@ -149,6 +151,7 @@ int lll_adv_data_init(struct lll_adv_pdu *pdu)
 		return -ENOMEM;
 	}
 
+	p->len = 0U;
 	pdu->pdu[0] = (void *)p;
 
 	return 0;
@@ -273,8 +276,6 @@ struct pdu_adv *lll_adv_pdu_latest_get(struct lll_adv_pdu *pdu,
 		void *p;
 
 		if (!MFIFO_ENQUEUE_IDX_GET(pdu_free, &free_idx)) {
-			LL_ASSERT(false);
-
 			return NULL;
 		}
 
@@ -789,7 +790,9 @@ static void chan_prepare(struct lll_adv *lll)
 	uint8_t upd = 0U;
 
 	pdu = lll_adv_data_latest_get(lll, &upd);
+	LL_ASSERT(pdu);
 	scan_pdu = lll_adv_scan_rsp_latest_get(lll, &upd);
+	LL_ASSERT(scan_pdu);
 
 #if defined(CONFIG_BT_CTLR_PRIVACY)
 	if (upd) {

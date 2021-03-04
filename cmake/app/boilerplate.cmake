@@ -199,9 +199,6 @@ add_custom_target(
 # Dummy add to generate files.
 zephyr_linker_sources(SECTIONS)
 
-zephyr_file(APPLICATION_ROOT BOARD_ROOT)
-list(APPEND BOARD_ROOT ${ZEPHYR_BASE})
-
 # 'BOARD_ROOT' is a prioritized list of directories where boards may
 # be found. It always includes ${ZEPHYR_BASE} at the lowest priority.
 zephyr_file(APPLICATION_ROOT BOARD_ROOT)
@@ -346,8 +343,13 @@ foreach(root ${BOARD_ROOT})
         ${SHIELD_DIR_${s}}/dts_fixup.h
         )
 
+      list(APPEND
+        SHIELD_DIRS
+        ${SHIELD_DIR_${s}}
+        )
+
       # search for shield/shield.conf file
-      if(EXISTS ${shield_dir}/${s_dir}/${s}.conf)
+      if(EXISTS ${SHIELD_DIR_${s}}/${s}.conf)
         # add shield.conf to the shield config list
         list(APPEND
           shield_conf_files
@@ -481,6 +483,9 @@ unset(CONF_FILE CACHE)
 
 zephyr_file(CONF_FILES ${APPLICATION_SOURCE_DIR}/boards DTS APP_BOARD_DTS)
 
+# The CONF_FILE variable is now set to its final value.
+zephyr_boilerplate_watch(CONF_FILE)
+
 if(DTC_OVERLAY_FILE)
   # DTC_OVERLAY_FILE has either been specified on the cmake CLI or is already
   # in the CMakeCache.txt. This has precedence over the environment
@@ -512,10 +517,14 @@ message(STATUS "Cache files will be written to: ${USER_CACHE_DIR}")
 set(CMAKE_C_COMPILER_FORCED   1)
 set(CMAKE_CXX_COMPILER_FORCED 1)
 
+include(${ZEPHYR_BASE}/cmake/verify-toolchain.cmake)
 include(${ZEPHYR_BASE}/cmake/host-tools.cmake)
 
 # Include board specific device-tree flags before parsing.
 include(${BOARD_DIR}/pre_dt_board.cmake OPTIONAL)
+
+# The DTC_OVERLAY_FILE variable is now set to its final value.
+zephyr_boilerplate_watch(DTC_OVERLAY_FILE)
 
 # DTS should be close to kconfig because CONFIG_ variables from
 # kconfig and dts should be available at the same time.
@@ -582,6 +591,7 @@ set(KERNEL_NAME ${CONFIG_KERNEL_BIN_NAME})
 set(KERNEL_ELF_NAME   ${KERNEL_NAME}.elf)
 set(KERNEL_BIN_NAME   ${KERNEL_NAME}.bin)
 set(KERNEL_HEX_NAME   ${KERNEL_NAME}.hex)
+set(KERNEL_UF2_NAME   ${KERNEL_NAME}.uf2)
 set(KERNEL_MAP_NAME   ${KERNEL_NAME}.map)
 set(KERNEL_LST_NAME   ${KERNEL_NAME}.lst)
 set(KERNEL_S19_NAME   ${KERNEL_NAME}.s19)
