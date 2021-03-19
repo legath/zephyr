@@ -595,13 +595,6 @@ static void unready_thread(struct k_thread *thread)
 	update_cache(thread == _current);
 }
 
-void z_remove_thread_from_ready_q(struct k_thread *thread)
-{
-	LOCKED(&sched_spinlock) {
-		unready_thread(thread);
-	}
-}
-
 /* sched_spinlock must be held */
 static void add_to_waitq_locked(struct k_thread *thread, _wait_q_t *wait_q)
 {
@@ -641,20 +634,6 @@ void z_pend_thread(struct k_thread *thread, _wait_q_t *wait_q,
 {
 	__ASSERT_NO_MSG(thread == _current || is_thread_dummy(thread));
 	pend(thread, wait_q, timeout);
-}
-
-ALWAYS_INLINE struct k_thread *z_find_first_thread_to_unpend(_wait_q_t *wait_q,
-						     struct k_thread *from)
-{
-	ARG_UNUSED(from);
-
-	struct k_thread *ret = NULL;
-
-	LOCKED(&sched_spinlock) {
-		ret = _priq_wait_best(&wait_q->waitq);
-	}
-
-	return ret;
 }
 
 static inline void unpend_thread_no_timeout(struct k_thread *thread)
@@ -1518,7 +1497,10 @@ void z_thread_abort(struct k_thread *thread)
 	if (active) {
 		/* It's running somewhere else, flag and poke */
 		thread->base.thread_state |= _THREAD_ABORTING;
+
+#ifdef CONFIG_SCHED_IPI_SUPPORTED
 		arch_sched_ipi();
+#endif
 	}
 
 	if (is_aborting(thread) && thread != _current) {

@@ -649,25 +649,22 @@ class DeviceHandler(Handler):
 
         log_out_fp.close()
 
-    def get_available_device(self, instance):
-        device = instance.platform.name
-        for d in self.suite.duts:
-            if d.platform == device and d.available and (d.serial or d.serial_pty):
-                d.available = 0
-                d.counter += 1
-                return d
-
-        return None
-
     def device_is_available(self, instance):
         device = instance.platform.name
         fixture = instance.testcase.harness_config.get("fixture")
         for d in self.suite.duts:
             if fixture and fixture not in d.fixtures:
                 continue
-            if d.platform == device and d.available and (d.serial or d.serial_pty):
+            if d.platform != device or not (d.serial or d.serial_pty):
+                continue
+            d.lock.acquire()
+            avail = False
+            if d.available:
                 d.available = 0
                 d.counter += 1
+                avail = True
+            d.lock.release()
+            if avail:
                 return d
 
         return None
@@ -817,6 +814,8 @@ class DeviceHandler(Handler):
                         self.instance.reason = "Device issue (Flash?)"
                         with open(d_log, "w") as dlog_fp:
                             dlog_fp.write(stderr.decode())
+                        os.write(write_pipe, b'x')  # halt the thread
+                        out_state = "flash_error"
                 except subprocess.TimeoutExpired:
                     proc.kill()
                     (stdout, stderr) = proc.communicate()
@@ -849,12 +848,15 @@ class DeviceHandler(Handler):
 
         handler_time = time.time() - start_time
 
-        if out_state == "timeout":
+        if out_state in ["timeout", "flash_error"]:
             for c in self.instance.testcase.cases:
                 if c not in harness.tests:
                     harness.tests[c] = "BLOCK"
 
-            self.instance.reason = "Timeout"
+            if out_state == "timeout":
+                self.instance.reason = "Timeout"
+            elif out_state == "flash_error":
+                self.instance.reason = "Flash error"
 
         self.instance.results = harness.tests
 
@@ -867,7 +869,7 @@ class DeviceHandler(Handler):
 
         if harness.state:
             self.set_state(harness.state, handler_time)
-            if  harness.state == "failed":
+            if harness.state == "failed":
                 self.instance.reason = "Failed"
         else:
             self.set_state(out_state, handler_time)
@@ -2064,6 +2066,10 @@ class CMake():
 
         logger.debug("Calling cmake with arguments: {}".format(cmake_args))
         cmake = shutil.which('cmake')
+        if not cmake:
+            msg = "Unable to find `cmake` in path"
+            logger.error(msg)
+            raise Exception(msg)
         cmd = [cmake] + cmake_args
 
         kwargs = dict()
@@ -2414,7 +2420,7 @@ class ProjectBuilder(FilterBuilder):
         results.done += 1
         instance = self.instance
 
-        if instance.status in ["error", "failed", "timeout"]:
+        if instance.status in ["error", "failed", "timeout", "flash_error"]:
             if instance.status == "error":
                 results.error += 1
             results.failed += 1
@@ -3043,6 +3049,9 @@ class TestSuite(DisablePyTestCollectionMixin):
 
             if tc.build_on_all and not platform_filter:
                 platform_scope = self.platforms
+            elif tc.integration_platforms and self.integration:
+                platform_scope = list(filter(lambda item: item.name in tc.integration_platforms, \
+                                         self.platforms))
             else:
                 platform_scope = platforms
 
@@ -3154,9 +3163,10 @@ class TestSuite(DisablePyTestCollectionMixin):
             if not instance_list:
                 continue
 
+            integration = self.integration and tc.integration_platforms
             # if twister was launched with no platform options at all, we
             # take all default platforms
-            if default_platforms and not tc.build_on_all:
+            if default_platforms and not tc.build_on_all and not integration:
                 if tc.platform_allow:
                     a = set(self.default_platforms)
                     b = set(tc.platform_allow)
@@ -3168,10 +3178,12 @@ class TestSuite(DisablePyTestCollectionMixin):
                         self.add_instances(instance_list[:1])
                 else:
                     instances = list(filter(lambda tc: tc.platform.default, instance_list))
-                    if self.integration:
-                        instances += list(filter(lambda item: item.platform.name in tc.integration_platforms, \
-                                         instance_list))
                     self.add_instances(instances)
+            elif integration:
+                instances = list(filter(lambda item:  item.platform.name in tc.integration_platforms, instance_list))
+                self.add_instances(instances)
+
+
 
             elif emulation_platforms:
                 self.add_instances(instance_list)
@@ -3374,7 +3386,7 @@ class TestSuite(DisablePyTestCollectionMixin):
                         else:
                             fails += 1
                 else:
-                    if instance.status in ["error", "failed", "timeout"]:
+                    if instance.status in ["error", "failed", "timeout", "flash_error"]:
                         if instance.reason in ['build_error', 'handler_crash']:
                             errors += 1
                         else:
@@ -3460,7 +3472,7 @@ class TestSuite(DisablePyTestCollectionMixin):
                                     eleTestcase,
                                     'error',
                                     type="failure",
-                                    message="failed")
+                                    message=instance.reason)
                             log_root = os.path.join(self.outdir, instance.platform.name, instance.testcase.name)
                             log_file = os.path.join(log_root, "handler.log")
                             el.text = self.process_log(log_file)
@@ -3491,7 +3503,7 @@ class TestSuite(DisablePyTestCollectionMixin):
                         name="%s" % (instance.testcase.name),
                         time="%f" % handler_time)
 
-                    if instance.status in ["error", "failed", "timeout"]:
+                    if instance.status in ["error", "failed", "timeout", "flash_error"]:
                         failure = ET.SubElement(
                             eleTestcase,
                             'failure',
@@ -3845,7 +3857,7 @@ class DUT(object):
         self.pre_script = pre_script
         self.probe_id = None
         self.notes = None
-
+        self.lock = Lock()
         self.match = False
 
 

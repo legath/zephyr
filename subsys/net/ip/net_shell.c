@@ -1870,8 +1870,8 @@ static void print_dns_info(const struct shell *shell,
 			continue;
 		}
 
-		remaining =
-			k_delayed_work_remaining_get(&ctx->queries[i].timer);
+		remaining = k_ticks_to_ms_ceil32(
+			k_work_delayable_remaining_get(&ctx->queries[i].timer));
 
 		if (ctx->queries[i].query_type == DNS_QUERY_TYPE_A) {
 			PR("\tIPv4[%u]: %s remaining %d\n",
@@ -4447,8 +4447,14 @@ static void tcp_connect(const struct shell *shell, char *host, uint16_t port,
 	 */
 	tcp_shell = shell;
 
+#if defined(CONFIG_NET_SOCKETS_CONNECT_TIMEOUT)
+#define CONNECT_TIMEOUT K_MSEC(CONFIG_NET_SOCKETS_CONNECT_TIMEOUT)
+#else
+#define CONNECT_TIMEOUT K_SECONDS(3)
+#endif
+
 	net_context_connect(*ctx, &addr, addrlen, tcp_connected,
-			    K_NO_WAIT, NULL);
+			    CONNECT_TIMEOUT, NULL);
 }
 
 static void tcp_sent_cb(struct net_context *context,

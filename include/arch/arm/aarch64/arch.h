@@ -30,6 +30,7 @@
 #include <arch/arm/aarch64/timer.h>
 #include <arch/arm/aarch64/error.h>
 #include <arch/arm/aarch64/arm_mmu.h>
+#include <arch/arm/aarch64/thread_stack.h>
 #include <arch/common/addr_types.h>
 #include <arch/common/sys_bitops.h>
 #include <arch/common/ffs.h>
@@ -40,14 +41,7 @@ extern "C" {
 
 #ifndef _ASMLANGUAGE
 
-/**
- * @brief Declare the ARCH_STACK_PTR_ALIGN
- *
- * Denotes the required alignment of the stack pointer on public API
- * boundaries
- *
- */
-#define ARCH_STACK_PTR_ALIGN	16
+#include <sys/slist.h>
 
 /* Kernel macros for memory attribution
  * (access permissions and cache-ability).
@@ -76,6 +70,11 @@ extern "C" {
 typedef struct {
 	uint32_t attrs;
 } k_mem_partition_attr_t;
+
+struct arch_mem_domain {
+	struct arm_mmu_ptables ptables;
+	sys_snode_t node;
+};
 
 #endif /* _ASMLANGUAGE */
 

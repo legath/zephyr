@@ -149,6 +149,14 @@ static inline const struct device *z_vrfy_device_get_binding(const char *name)
 	return z_impl_device_get_binding(name_copy);
 }
 #include <syscalls/device_get_binding_mrsh.c>
+
+static inline int z_vrfy_device_usable_check(const struct device *dev)
+{
+	Z_OOPS(Z_SYSCALL_OBJ_INIT(dev, K_OBJ_ANY));
+
+	return z_impl_device_usable_check(dev);
+}
+#include <syscalls/device_usable_check_mrsh.c>
 #endif /* CONFIG_USERSPACE */
 
 size_t z_device_get_all_static(struct device const **devices)
@@ -160,6 +168,28 @@ size_t z_device_get_all_static(struct device const **devices)
 bool z_device_ready(const struct device *dev)
 {
 	return dev->state->initialized && (dev->state->init_res == 0);
+}
+
+int device_required_foreach(const struct device *dev,
+			  device_visitor_callback_t visitor_cb,
+			  void *context)
+{
+	size_t handle_count = 0;
+	const device_handle_t *handles =
+		device_required_handles_get(dev, &handle_count);
+
+	/* Iterate over fixed devices */
+	for (size_t i = 0; i < handle_count; ++i) {
+		device_handle_t dh = handles[i];
+		const struct device *rdev = device_from_handle(dh);
+		int rc = visitor_cb(rdev, context);
+
+		if (rc < 0) {
+			return rc;
+		}
+	}
+
+	return handle_count;
 }
 
 #ifdef CONFIG_PM_DEVICE

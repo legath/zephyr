@@ -36,7 +36,10 @@ LOG_MODULE_REGISTER(log);
 #endif
 
 #ifndef CONFIG_LOG_STRDUP_MAX_STRING
-#define CONFIG_LOG_STRDUP_MAX_STRING 0
+/* Required to suppress compiler warnings related to array subscript above array bounds.
+ * log_strdup explicitly accesses element with index of (sizeof(log_strdup_buf.buf) - 2).
+ */
+#define CONFIG_LOG_STRDUP_MAX_STRING 1
 #endif
 
 #ifndef CONFIG_LOG_STRDUP_BUF_COUNT
@@ -544,7 +547,7 @@ void log_init(void)
 
 		if (backend->autostart) {
 			if (backend->api->init != NULL) {
-				backend->api->init();
+				backend->api->init(backend);
 			}
 
 			log_backend_enable(backend, NULL, CONFIG_LOG_MAX_LEVEL);
@@ -1067,8 +1070,8 @@ void z_vrfy_z_log_hexdump_from_user(uint32_t src_level_val, const char *metadata
 		struct log_msg_ids structure;
 		uint32_t value;
 	} src_level_union;
-	size_t mlen;
 	int err;
+	char kmeta[CONFIG_LOG_STRDUP_MAX_STRING];
 
 	src_level_union.value = src_level_val;
 
@@ -1096,16 +1099,15 @@ void z_vrfy_z_log_hexdump_from_user(uint32_t src_level_val, const char *metadata
 	 * need the log subsystem to eventually free it, we're going
 	 * to use log_strdup().
 	 */
-	mlen = z_user_string_nlen(metadata, CONFIG_LOG_STRDUP_MAX_STRING, &err);
-	Z_OOPS(Z_SYSCALL_VERIFY_MSG(err == 0, "invalid string passed in"));
-	Z_OOPS(Z_SYSCALL_MEMORY_READ(metadata, mlen));
+	err = z_user_string_copy(kmeta, metadata, sizeof(kmeta));
+	Z_OOPS(Z_SYSCALL_VERIFY_MSG(err == 0, "invalid meta passed in"));
 	Z_OOPS(Z_SYSCALL_MEMORY_READ(data, len));
 
 	if (IS_ENABLED(CONFIG_LOG_IMMEDIATE)) {
 		log_hexdump_sync(src_level_union.structure,
-				 metadata, data, len);
+				 kmeta, data, len);
 	} else {
-		metadata = log_strdup(metadata);
+		metadata = log_strdup(kmeta);
 		log_hexdump(metadata, data, len, src_level_union.structure);
 	}
 }

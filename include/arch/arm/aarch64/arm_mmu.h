@@ -142,6 +142,7 @@
 #define TCR_PS_BITS_256TB	0x5ULL
 
 #ifndef _ASMLANGUAGE
+
 /* Region definition data structure */
 struct arm_mmu_region {
 	/* Region Base Physical Address */
@@ -192,6 +193,11 @@ struct arm_mmu_ptables {
  * regions enabled during kernel initialization.
  */
 extern const struct arm_mmu_config mmu_config;
+
+struct k_thread;
+void z_arm64_mmu_init(void);
+void z_arm64_thread_pt_init(struct k_thread *thread);
+void z_arm64_swap_ptables(struct k_thread *thread);
 
 #endif /* _ASMLANGUAGE */
 
