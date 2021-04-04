@@ -6,8 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef __TC_UTIL_H__
-#define __TC_UTIL_H__
+#ifndef ZEPHYR_TESTSUITE_INCLUDE_TC_UTIL_H_
+#define ZEPHYR_TESTSUITE_INCLUDE_TC_UTIL_H_
 
 #include <zephyr.h>
 
@@ -101,7 +101,7 @@ static inline void get_start_time_cyc(void)
 	 * TC_START() in their code. But the caller thread cannot be
 	 * in userspace.
 	 */
-	if (!_is_user_context()) {
+	if (!k_is_user_context()) {
 		tc_start_time = k_cycle_get_32();
 	}
 }
@@ -195,4 +195,4 @@ static inline void test_time_ms(void)
 #define TC_CMD_ITEM(name) {STRINGIFY(name), cmd_##name, "none"}
 #endif
 
-#endif /* __TC_UTIL_H__ */
+#endif /* ZEPHYR_TESTSUITE_INCLUDE_TC_UTIL_H_ */

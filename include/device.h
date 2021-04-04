@@ -14,6 +14,13 @@
  * @}
  */
 /**
+ * @brief Miscellaneous Drivers APIs
+ * @defgroup misc_interfaces Miscellaneous Drivers APIs
+ * @ingroup io_interfaces
+ * @{
+ * @}
+ */
+/**
  * @brief Device Model APIs
  * @defgroup device_model Device Model APIs
  * @{
@@ -289,9 +296,9 @@ typedef int16_t device_handle_t;
  * @param compat lowercase-and-underscores devicetree compatible
  * @return a pointer to a device, or NULL
  */
-#define DEVICE_DT_GET_ANY(compat)			\
-	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(compat),	\
-		    (DEVICE_DT_GET(DT_INST(0, compat))),	\
+#define DEVICE_DT_GET_ANY(compat)					    \
+	COND_CODE_1(DT_HAS_COMPAT_STATUS_OKAY(compat),			    \
+		    (DEVICE_DT_GET(DT_COMPAT_GET_ANY_STATUS_OKAY(compat))), \
 		    (NULL))
 
 /**
@@ -719,18 +726,18 @@ const char *device_pm_state_str(uint32_t state);
  * Called by a device driver to indicate that it is in the middle of a
  * transaction.
  *
- * @param busy_dev Pointer to device structure of the driver instance.
+ * @param dev Pointer to device structure of the driver instance.
  */
-void device_busy_set(const struct device *busy_dev);
+void device_busy_set(const struct device *dev);
 
 /**
  * @brief Indicate that the device has completed its transaction
  *
  * Called by a device driver to indicate the end of a transaction.
  *
- * @param busy_dev Pointer to device structure of the driver instance.
+ * @param dev Pointer to device structure of the driver instance.
  */
-void device_busy_clear(const struct device *busy_dev);
+void device_busy_clear(const struct device *dev);
 
 #ifdef CONFIG_PM_DEVICE
 /*
@@ -810,25 +817,6 @@ static inline int device_get_power_state(const struct device *dev,
 						 DEVICE_PM_GET_POWER_STATE,
 						 device_power_state, NULL, NULL);
 	}
-}
-
-/**
- * @brief Gets the device structure list array and device count
- *
- * Called by the Power Manager application to get the list of
- * device structures associated with the devices in the system.
- * The PM app would use this list to create its own sorted list
- * based on the order it wishes to suspend or resume the devices.
- *
- * @param device_list Pointer to receive the device list array
- * @param device_count Pointer to receive the device count
- *
- * @deprecated in 2.4 release, replace with z_device_get_all_static()
- */
-__deprecated static inline void device_list_get(const struct device * *device_list,
-						int *device_count)
-{
-	*device_count = z_device_get_all_static(device_list);
 }
 
 /**
@@ -1052,7 +1040,7 @@ BUILD_ASSERT(sizeof(device_handle_t) == 2, "fix the linker scripts");
 	COND_CODE_1(DT_NODE_EXISTS(node_id), (), (static))		\
 		const Z_DECL_ALIGN(struct device)			\
 		DEVICE_NAME_GET(dev_name) __used			\
-	__attribute__((__section__(".device_" #level STRINGIFY(prio)))) = { \
+	__attribute__((__section__(".device_" #level STRINGIFY(prio)"_"))) = { \
 		.name = drv_name,					\
 		.config = (cfg_ptr),					\
 		.api = (api_ptr),					\

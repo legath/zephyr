@@ -51,7 +51,7 @@ static void trigger_fault_illegal_instruction(void)
 
 static void trigger_fault_access(void)
 {
-#if defined(CONFIG_CPU_ARCEM) || defined(CONFIG_CPU_CORTEX_M)
+#if defined(CONFIG_SOC_ARC_IOT) || defined(CONFIG_SOC_NSIM) || defined(CONFIG_CPU_CORTEX_M)
 	/* For iotdk and ARC/nSIM, nSIM simulates full address space of memory,
 	 * so all accesses outside of CCMs are valid and access to 0x0 address
 	 * doesn't generate any exception.So we access it 0XFFFFFFFF instead to
@@ -201,7 +201,7 @@ static int run_trigger_thread(int i)
 
 	case_type = i;
 
-	if (_is_user_context()) {
+	if (k_is_user_context()) {
 		perm = perm | K_USER;
 	}
 

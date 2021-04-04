@@ -44,7 +44,7 @@ manifest:
       path: modules/lib/civetweb
     - name: hal_espressif
       west-commands: west/west-commands.yml
-      revision: 17269ae883441d3dd8498b7f170cf9cb421edc05
+      revision: 7d27051e7e39b65d6a402b0f4609264194a00d18
       path: modules/hal/espressif
     - name: fatfs
       revision: 1d1fcc725aa1cb3c32f366e0c53d7490d0fe1109
@@ -56,7 +56,7 @@ manifest:
       revision: f1fa8241f8786198ba41155413243de36ed878a5
       path: modules/hal/infineon
     - name: hal_nordic
-      revision: 6667950c239bc6ecb8a8bcb737c41ec98681c485
+      revision: fc301b97581d01cb5be47f837087a41632070434
       path: modules/hal/nordic
     - name: hal_openisa
       revision: 40d049f69c50b58ea20473bee14cf93f518bf262
@@ -100,10 +100,10 @@ manifest:
       revision: 9f09bae7c0ad7df5e0a72731061125913fba61c7
       path: modules/lib/mcumgr
     - name: net-tools
-      revision: 41132e9220f8bc1223084975350c5e5f3b492afe
+      revision: 244d685184e7e983f47569be276d9d4c1b133016
       path: tools/net-tools
     - name: hal_nxp
-      revision: b916bca1d5976b0157be80b326e3bb46ef605286
+      revision: 6f587556a98b5167b1f301c1e10fed1443942906
       path: modules/hal/nxp
     - name: open-amp
       revision: de1b85a13032a2de1d8b6695ae5f800b613e739d
@@ -143,11 +143,11 @@ manifest:
       revision: 7dd56fc100d79cc45c33d43e7401d1803e26f6e7
     - name: trusted-firmware-m
       path: modules/tee/tfm
-      revision: 69dc29a48b707dfe732a57e05a3291ca71138eec
+      revision: d07d72c64e4b3d8594829eea302b88e51709861f
     - name: tfm-mcuboot # This is used by the trusted-firmware-m module.
       repo-path: mcuboot
       path: modules/tee/tfm-mcuboot
-      revision: 1.7.0-rc1
+      revision: v1.7.2
 
   self:
     path: zephyr
